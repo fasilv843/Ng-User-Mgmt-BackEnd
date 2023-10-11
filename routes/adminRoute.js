@@ -3,11 +3,13 @@ const adminRouter = require('express').Router()
 const User = require('../models/userModel');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+require('dotenv').config()
 
 console.log('On admin route');
 
 adminRouter.post('/login', async(req,res) => {
     try {
+        console.log('in admin login controller');
         const adminData = await User.findOne({email:req.body.email, isAdmin:true});
         if(!adminData){
             return res.status(400).send({message: 'This admin not exist'})
@@ -18,11 +20,15 @@ adminRouter.post('/login', async(req,res) => {
             })
         }
 
-        const token = jwt.sign({ _id: adminData._id}, 'secret');
+        console.log('verifying jwt');
+
+        const token = jwt.sign({ _id: adminData._id}, process.env.JWT_SECRET);
         res.cookie('jwt', token, { 
             httpOnly: true,
             maxAge: 24 * 60 * 60 * 1000
-        })
+        });
+        
+        console.log('sending response success');
         res.send({ message: 'Success' });
 
     } catch (error) {
@@ -43,12 +49,12 @@ adminRouter.post('/logout', async(req,res) => {
 adminRouter.get('/active', async(req,res) => {
     try {
         const cookie = req.cookies["jwt"];
-        const claims = jwt.verify(cookie,"secret")
+        const claims = jwt.verify(cookie, process.env.JWT_SECRET)
         if(!claims){
          return res.status(401).send({ message:"Unautherized :(" })
         }
 
-        const user = await User.findOne({_id:claims._id,isAdmin:"true"});
+        const user = await User.findOne({_id:claims._id,isAdmin:true});
         const {password,...data} = user.toJSON();
         res.send(data);
 

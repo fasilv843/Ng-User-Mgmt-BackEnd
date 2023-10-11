@@ -4,13 +4,14 @@ const User = require('../models/userModel');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const uplaod = require('multer')({dest: './images'})
+require('dotenv').config()
 
 console.log('On user route');
 
 userRouter.post('/register', async( req, res ) => {
     console.log('On Register controller');
     const { email, password, name } = req.body;
-    const salt = await bcrypt.genSalt(10);
+    const salt = await bcrypt.genSalt(10);  //$2a$10$.Q/Ed5I/w4G0TVYPbDzqJ.
     const hashedPass = await bcrypt.hash(password, salt)
     const isUserExist = await User.findOne({email})
 
@@ -25,7 +26,7 @@ userRouter.post('/register', async( req, res ) => {
         }).save()
 
         const { _id } = await user.toJSON();
-        const token = jwt.sign({_id: _id},'secret');
+        const token = jwt.sign({_id: _id},process.env.JWT_SECRET);
 
         res.cookie('jwt',token, {
             httpOnly:true,
@@ -48,7 +49,7 @@ userRouter.post('/login', async(req, res) => {
         return res.status(400).send({ message: 'Password is Incorrect' })
     }
 
-    const token = jwt.sign({_id: userData._id},'secret')
+    const token = jwt.sign({_id: userData._id}, process.env.JWT_SECRET)
     res.cookie('jwt',token, {
         httpOnly: true,
         maxAge: 24 * 60 * 60 * 1000
@@ -61,7 +62,7 @@ userRouter.get('/', async(req, res) => {
     try {
         console.log('On user home controller');
         const cookie = req.cookies['jwt'];
-        const claims = jwt.verify(cookie, 'secret')
+        const claims = jwt.verify(cookie, process.env.JWT_SECRET)
         console.log(claims);
 
         if(!claims){
@@ -87,7 +88,7 @@ userRouter.post('/profile-upload-single',uplaod.single('image'), async(req, res)
     try {
         console.log('upload controller');
         const cookie = req.cookies['jwt'];
-        const claims = jwt.verify(cookie, 'secret')
+        const claims = jwt.verify(cookie, process.env.JWT_SECRET)
         if(!claims) return res.status(401).send({ message: 'Unauthenticated' })
 
         const updateImg = await User.updateOne(
@@ -110,9 +111,9 @@ userRouter.post('/profile-upload-single',uplaod.single('image'), async(req, res)
 userRouter.get('/profile', async(req, res) => {
     try {
         console.log('On profile controller');
-        const cookie = req.cookies['jwt']
-        console.log(cookie);
-        const claims = jwt.verify(cookie, 'secret')
+        const token = req.cookies['jwt']
+        console.log(req.cookies);
+        const claims = jwt.verify(token, process.env.JWT_SECRET)
         if(!claims) return res.status(401).send( { message: 'Unauthenticated' })
 
         const userData = await User.findOne({ _id: claims._id })
