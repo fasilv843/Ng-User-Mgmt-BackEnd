@@ -4,9 +4,14 @@ const userRoutes = require('./routes/userRoute')
 const adminRoutes = require('./routes/adminRoute')
 const cookieParser = require('cookie-parser')
 const { mongoConnect } = require('./config/mongoose')
+const path = require('path');
+
 
 const app = express()
 mongoConnect()
+
+app.use('/images', express.static(path.join(__dirname, './images')));
+
 
 app.use(cors({
     credentials: true,

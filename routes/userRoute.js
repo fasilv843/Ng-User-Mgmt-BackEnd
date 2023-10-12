@@ -3,7 +3,7 @@ const userRouter = require('express').Router()
 const User = require('../models/userModel');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const uplaod = require('multer')({dest: './images'})
+const uplaod = require('../config/multer')
 require('dotenv').config()
 
 console.log('On user route');
@@ -95,7 +95,7 @@ userRouter.post('/profile-upload-single',uplaod.single('image'), async(req, res)
             {_id: claims._id},
             {
                 $set:{
-                    image: req.file.filename+'.jpg'
+                    image: req.file.filename
                 }
             }
         );
